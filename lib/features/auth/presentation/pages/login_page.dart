@@ -1,15 +1,16 @@
+import 'package:blog_app/core/common/widgets/loader.dart';
 import 'package:blog_app/core/theme/app_pallete.dart';
 import 'package:blog_app/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:blog_app/features/auth/presentation/pages/signup_page.dart';
 import 'package:blog_app/features/auth/presentation/pages/widgets/auth_field.dart';
 import 'package:blog_app/features/auth/presentation/pages/widgets/auth_gradient.dart';
+import 'package:blog_app/features/blog/presentation/pages/blog_pages.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 class LoginPage extends StatefulWidget {
-  static MaterialPageRoute route() => MaterialPageRoute(
-        builder: (context) => const LoginPage(),
-      );
+  static MaterialPageRoute route() =>
+      MaterialPageRoute(builder: (context) => const LoginPage());
   const LoginPage({super.key});
 
   @override
@@ -32,23 +33,40 @@ class _LoginPageState extends State<LoginPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(),
-      body: Padding(
-        padding: const EdgeInsets.all(8.0),
-        child: Form(
-          key:formKey ,
-          child: Column(
-            mainAxisAlignment:MainAxisAlignment.center ,
-            children: [
-              Text('Sign In',
-              style: TextStyle(
-              fontSize: 50,
-              fontWeight: FontWeight.bold
-              )),
-                  const SizedBox(height: 30),
-                  AuthField(
-                    hintText: 'Email',
-                    controller: emailController,
+      body: BlocConsumer<AuthBloc, AuthState>(
+        listener: (context, state) {
+          if (state is AuthFailure) {
+            ScaffoldMessenger.of(context)
+              ..hideCurrentSnackBar()
+              ..showSnackBar(SnackBar(content: Text(state.message)));
+          }
+
+          if (state is AuthSuccess) {
+            Navigator.pushAndRemoveUntil(
+              context,
+              MaterialPageRoute(builder: (context) => const BlogPage()),
+              (route) => false,
+            );
+          }
+        },
+        builder: (context, state) {
+          if (state is AuthLoading) {
+            return const Loader();
+          }
+
+          return Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Form(
+              key: formKey,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Text(
+                    'Sign In',
+                    style: TextStyle(fontSize: 50, fontWeight: FontWeight.bold),
                   ),
+                  const SizedBox(height: 30),
+                  AuthField(hintText: 'Email', controller: emailController),
                   const SizedBox(height: 15),
                   AuthField(
                     hintText: 'Password',
@@ -61,11 +79,11 @@ class _LoginPageState extends State<LoginPage> {
                     onPressed: () {
                       if (formKey.currentState!.validate()) {
                         context.read<AuthBloc>().add(
-                              AuthLogin(
-                                email: emailController.text.trim(),
-                                password: passwordController.text.trim(),
-                              ),
-                            );
+                          AuthLogin(
+                            email: emailController.text.trim(),
+                            password: passwordController.text.trim(),
+                          ),
+                        );
                       }
                     },
                   ),
@@ -81,22 +99,21 @@ class _LoginPageState extends State<LoginPage> {
                         children: [
                           TextSpan(
                             text: 'Sign Up',
-                            style: Theme.of(context)
-                                .textTheme
-                                .titleMedium
+                            style: Theme.of(context).textTheme.titleMedium
                                 ?.copyWith(
                                   color: AppPallete.gradient2,
                                   fontWeight: FontWeight.bold,
-                                ), 
-                        ),
-                      ]
-                                
-                  
-                      )),
-                )
-            ],
-          ),
-        ),
+                                ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
       ),
     );
   }
